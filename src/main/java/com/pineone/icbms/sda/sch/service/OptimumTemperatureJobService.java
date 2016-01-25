@@ -31,7 +31,7 @@ public class OptimumTemperatureJobService extends SchedulerJobComm implements Jo
 		AggrDAO aggrDAO;
 		StringBuffer msg = new StringBuffer();
 
-		log.debug("OptimumTemperatureJobService(id : "+jec.getJobDetail().getName()+") start.......................");
+		log.info("OptimumTemperatureJobService(id : "+jec.getJobDetail().getName()+") start.......................");
 		
 		try {
 			start_time = Utils.dateFormat.format(new Date());
@@ -58,8 +58,8 @@ public class OptimumTemperatureJobService extends SchedulerJobComm implements Jo
 			// aggr테이블의 aggr_id에 설정된 개수만큼 아래를 수행한다.(1개만 있다..)
 			SparqlService sparqlService = new SparqlService();
 			List<Map<String, String>> argsResultList;		// 대상목록
-			List<Map<String, String>> aggrResultList;
-			// argsql로 대상을 구함
+//			List<Map<String, String>> aggrResultList;
+			// argsql로 대상및 값을 구함
 			argsResultList = sparqlService.runSparql(aggrList.get(0).getArgsql());
 			
 			//test
@@ -87,7 +87,7 @@ public class OptimumTemperatureJobService extends SchedulerJobComm implements Jo
 				maxValue = "25";
 				minValue = "21";
 			}else if(today >= 1127 && today <= 1231) { // winter
-				maxValue = "25";
+				maxValue = "20";
 				minValue = "18";
 			}else if(today >= 101 && today <= 301) { // winter
 				maxValue = "20";
@@ -96,7 +96,7 @@ public class OptimumTemperatureJobService extends SchedulerJobComm implements Jo
 			
 			for(int m = 0; m < argsResultList.size(); m++) {
 				if(jec.getJobDetail().getName().equals("AG-2-1-001")) {
-					sparqlService.updateSparql(aggrList.get(0).getDeleteql(), aggrList.get(0).getInsertql(), new String[]{argsResultList.get(m).get("prefer_value"), minValue});
+					sparqlService.updateSparql(aggrList.get(0).getUpdateql(), new String[]{argsResultList.get(m).get("prefer_value"), minValue});
 					msg.append("prefer_uri["+m+"] ==>  ");
 					msg.append(argsResultList.get(m).get("prefer_value"));
 					msg.append(Utils.NEW_LINE);
@@ -106,7 +106,7 @@ public class OptimumTemperatureJobService extends SchedulerJobComm implements Jo
 					
 					log.debug("min("+minValue+") value updated...");
 				} else if(jec.getJobDetail().getName().equals("AG-2-1-002")) {
-					sparqlService.updateSparql(aggrList.get(0).getDeleteql(), aggrList.get(0).getInsertql(), new String[]{argsResultList.get(m).get("prefer_value"), maxValue});
+					sparqlService.updateSparql(aggrList.get(0).getUpdateql(), new String[]{argsResultList.get(m).get("prefer_value"), maxValue});
 					msg.append("prefer_uri["+m+"] ==>  ");
 					msg.append(argsResultList.get(m).get("prefer_value"));
 					msg.append(Utils.NEW_LINE);
@@ -128,7 +128,7 @@ public class OptimumTemperatureJobService extends SchedulerJobComm implements Jo
 
 			// finish_time값을 sch테이블의 last_work_time에 update
 			updateLastWorkTime(jec, finish_time);
-			log.debug("OptimumTemperatureJobService(id : "+jec.getJobDetail().getName()+") end.......................");			
+			log.info("OptimumTemperatureJobService(id : "+jec.getJobDetail().getName()+") end.......................");			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

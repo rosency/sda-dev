@@ -31,7 +31,7 @@ public class PersonCurrentLocationJobService extends SchedulerJobComm implements
 		AggrDAO aggrDAO;
 		StringBuffer msg = new StringBuffer();
 
-		log.debug("PersonCurrentLocationJobService(id : "+jec.getJobDetail().getName()+") start.......................");
+		log.info("PersonCurrentLocationJobService(id : "+jec.getJobDetail().getName()+") start.......................");
 		
 		try {
 			start_time = Utils.dateFormat.format(new Date());
@@ -88,11 +88,15 @@ public class PersonCurrentLocationJobService extends SchedulerJobComm implements
 					loc =aggrResultList.get(0).get("loc"); 
 				}
 				
-				// loc값이 없으면 delete만 수행한다.
+				// loc값이 없으면 delete만 수행한다. --> loc값이 없으면 pass하여 이전값을 유지 시킴
 				if(loc.equals("")) {
-					sparqlService.deleteSparql(aggrList.get(0).getDeleteql(), new String[]{argsResultList.get(m).get("user"), loc});
+					// pass
+					//sparqlService.deleteSparql(aggrList.get(0).getDeleteql(), new String[]{argsResultList.get(m).get("user"), loc});
 				} else {
-					sparqlService.updateSparql(aggrList.get(0).getDeleteql(), aggrList.get(0).getInsertql(), new String[]{argsResultList.get(m).get("user"), loc});
+					synchronized (this) {
+						sparqlService.updateSparql(aggrList.get(0).getUpdateql(), new String[]{argsResultList.get(m).get("user"), loc});
+						sparqlService.updateSparql(aggrList.get(0).getDeleteql(), aggrList.get(0).getInsertql(), new String[]{argsResultList.get(m).get("user"), loc});
+					}
 				}
 
 				msg.append("loc ==> ");
@@ -111,7 +115,7 @@ public class PersonCurrentLocationJobService extends SchedulerJobComm implements
 
 			// finish_time값을 sch테이블의 last_work_time에 update
 			updateLastWorkTime(jec, finish_time);
-			log.debug("PersonCurrentLocationJobService(id : "+jec.getJobDetail().getName()+") end.......................");			
+			log.info("PersonCurrentLocationJobService(id : "+jec.getJobDetail().getName()+") end.......................");			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
